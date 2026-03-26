@@ -52,21 +52,6 @@
 
 ---
 
-## 📂 Project Structure
-
-
-📁 Project Files
-├── login.html
-├── home.html
-├── books.html
-├── issue.html
-├── request.html
-├── return.html
-├── status.html
-├── bg.jpg
-
-
----
 
 ## 📌 Key Concepts Implemented
 
