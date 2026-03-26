@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Books - Pado Aur Seekho</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+}
+
+/* Navbar */
+nav{
+background:#8bc34a;
+padding:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+nav a{
+color:white;
+margin:0 20px;
+font-weight:bold;
+text-decoration:none;
+}
+
+#userInfo{
+position:absolute;
+right:20px;
+color:white;
+font-weight:bold;
+}
+
+/* Title */
+.title-box{
+width:50%;
+margin:40px auto;
+text-align:center;
+background:rgba(0,0,0,0.6);
+padding:15px;
+border-radius:10px;
+color:white;
+font-size:40px;
+}
+
+.container{
+width:90%;
+margin:30px auto;
+background:rgba(255,255,255,0.95);
+padding:20px;
+border-radius:10px;
+}
+
+.controls{
+text-align:center;
+margin-bottom:15px;
+}
+
+input,select,button{
+padding:8px;
+margin:5px;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+button{
+background:#8bc34a;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#8bc34a;
+color:white;
+}
+
+.available{color:green;font-weight:bold;}
+.notavailable{color:red;font-weight:bold;}
+
+.pagination{
+text-align:center;
+margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="title-box">Books Available</div>
+
+<nav>
+
+<a href="home.html">Home</a>
+<a href="books.html">Books</a>
+
+<!-- STUDENT -->
+<a href="issue.html" id="requestBookLink">Request Book</a>
+<a href="status.html" id="statusLink">My Status</a>
+
+<!-- LIBRARIAN -->
+<a href="request.html" id="approveLink">Requests</a>
+<a href="return.html" id="returnLink">Return Book</a>
+
+<span id="userInfo"></span>
+
+</nav>
+
+<div class="container">
+
+<div class="controls">
+
+<input type="text" id="searchInput"
+placeholder="Search books..."
+onkeyup="searchBooks()">
+
+<select id="branchFilter"
+onchange="filterBooks()">
+
+<option value="All">All Branches</option>
+<option>CSE</option>
+<option>CSD</option>
+<option>ECE</option>
+<option>EEE</option>
+<option>MECH</option>
+<option>CIVIL</option>
+
+</select>
+
+<button id="requestBtn"
+onclick="issueSelectedBooks()">
+Request Selected Books
+</button>
+
+</div>
+
+<table id="booksTable"></table>
+
+<div class="pagination"
+id="pagination"></div>
+
+</div>
+
+<script>
+
+/* ===== LOGIN CHECK ===== */
+
+var user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="index.html";
+}
+
+/* USER PROFILE */
+
+document.getElementById("userInfo").innerHTML =
+`👤 ${user.role}: ${user.name}
+ | <a href="#" onclick="logout()" style="color:white;">Logout</a>`;
+
+/* ROLE NAVIGATION */
+
+if(user.role==="Student"){
+document.getElementById("approveLink").style.display="none";
+document.getElementById("returnLink").style.display="none";
+}else{
+document.getElementById("requestBookLink").style.display="none";
+document.getElementById("statusLink").style.display="none";
+}
+
+/* LOGOUT */
+
+function logout(){
+if(confirm("Are you sure you want to log out?")){
+localStorage.removeItem("user");
+window.location.href="index.html";
+}
+}
+
+/* ===== BOOK DATABASE ===== */
+
+var originalBooks =
+JSON.parse(localStorage.getItem("libraryBooks"));
+
+if(!originalBooks){
+
+originalBooks = [
+
+{ id:"CSE101", name:"Introduction to Algorithms", author:"Thomas H. Cormen", branch:"CSE", copies:5 },
+{ id:"CSE102", name:"Clean Code", author:"Robert C. Martin", branch:"CSE", copies:4 },
+{ id:"CSE103", name:"Computer Networks", author:"Andrew Tanenbaum", branch:"CSE", copies:3 },
+{ id:"CSD101", name:"Artificial Intelligence", author:"Stuart Russell", branch:"CSD", copies:3 },
+{ id:"CSD102", name:"Machine Learning", author:"Tom Mitchell", branch:"CSD", copies:2 },
+{ id:"ECE101", name:"Electronic Devices", author:"Boylestad", branch:"ECE", copies:4 },
+{ id:"EEE101", name:"Electrical Machines", author:"P.S. Bimbhra", branch:"EEE", copies:3 },
+{ id:"MECH101", name:"Engineering Mechanics", author:"Hibbeler", branch:"MECH", copies:4 },
+{ id:"CIV101", name:"Structural Analysis", author:"S.S. Bhavikatti", branch:"CIVIL", copies:2 }
+
+];
+
+localStorage.setItem("libraryBooks",JSON.stringify(originalBooks));
+}
+
+var booksData = [...originalBooks];
+
+/* ===== TABLE DISPLAY ===== */
+
+var table=document.getElementById("booksTable");
+
+var rowsPerPage=10;
+var currentPage=1;
+
+function displayTable(){
+
+let selectColumn = (user.role==="Student");
+
+table.innerHTML=`
+
+<tr>
+
+${selectColumn ? "<th>Select</th>" : ""}
+
+<th>Book ID</th>
+<th>Book Name</th>
+<th>Author</th>
+<th>Branch</th>
+<th>Copies</th>
+<th>Status</th>
+
+</tr>
+`;
+
+let start=(currentPage-1)*rowsPerPage;
+let pageData=booksData.slice(start,start+rowsPerPage);
+
+pageData.forEach(book=>{
+
+let available=book.copies>0;
+
+let disabled=available ? "" : "disabled";
+
+let status=available ? "Available" : "Not Available";
+
+let statusClass=available ? "available" : "notavailable";
+
+table.innerHTML+=`
+
+<tr>
+
+${selectColumn ?
+`<td><input type="checkbox" value="${book.id}" ${disabled}></td>` : ""}
+
+<td>${book.id}</td>
+<td>${book.name}</td>
+<td>${book.author}</td>
+<td>${book.branch}</td>
+<td>${book.copies}</td>
+<td class="${statusClass}">${status}</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+/* ===== PAGINATION ===== */
+
+function setupPagination(){
+
+let pageCount=Math.ceil(booksData.length/rowsPerPage);
+
+let pagination=document.getElementById("pagination");
+
+pagination.innerHTML="";
+
+for(let i=1;i<=pageCount;i++){
+pagination.innerHTML+=`<button onclick="goToPage(${i})">${i}</button>`;
+}
+
+}
+
+function goToPage(p){
+currentPage=p;
+displayTable();
+}
+
+/* ===== REQUEST BOOK ===== */
+
+function issueSelectedBooks(){
+
+if(user.role!=="Student") return;
+
+var selected=document.querySelectorAll('input[type="checkbox"]:checked');
+
+if(selected.length==0){
+alert("Select at least 1 book");
+return;
+}
+
+if(selected.length>3){
+alert("Max 3 books allowed");
+return;
+}
+
+var ids=[];
+selected.forEach(cb=>ids.push(cb.value));
+
+window.location.href="issue.html?books="+ids.join(",");
+
+}
+
+/* ===== SEARCH ===== */
+
+function searchBooks(){
+
+var input=document.getElementById("searchInput").value.toLowerCase();
+
+booksData = originalBooks.filter(b=>
+b.name.toLowerCase().includes(input) ||
+b.id.toLowerCase().includes(input)
+);
+
+displayTable();
+setupPagination();
+
+}
+
+/* ===== FILTER ===== */
+
+function filterBooks(){
+
+var branch=document.getElementById("branchFilter").value;
+
+if(branch==="All"){
+booksData=[...originalBooks];
+}else{
+booksData=originalBooks.filter(b=>b.branch===branch);
+}
+
+displayTable();
+setupPagination();
+
+}
+
+/* INIT */
+
+displayTable();
+setupPagination();
+
+</script>
+
+</body>
+</html>

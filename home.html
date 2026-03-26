@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pado Aur Seekho - Library</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+height:100vh;
+}
+
+header{
+text-align:center;
+padding:40px 20px 10px 20px;
+}
+
+header h1{
+margin:0;
+color:#ffffff;
+font-size:80px;
+}
+
+/* NAVBAR */
+
+nav{
+margin-top:40px;
+background-color:yellowgreen;
+padding:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+nav a{
+text-decoration:none;
+color:#ffffff;
+margin:0 20px;
+font-weight:bold;
+font-size:20px;
+transition:0.3s;
+}
+
+nav a:hover{
+color:black;
+}
+
+/* USER INFO */
+
+#userInfo{
+position:absolute;
+right:20px;
+color:white;
+font-weight:bold;
+}
+
+/* CONTENT */
+
+.content{
+text-align:center;
+margin-top:80px;
+color:white;
+}
+
+.content h2{
+font-size:30px;
+}
+
+footer{
+text-align:center;
+padding:12px;
+color:white;
+position:fixed;
+bottom:0;
+width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Pado Aur Seekho</h1>
+</header>
+
+<nav>
+
+<a href="home.html">Home</a>
+<a href="books.html">Books</a>
+
+<!-- STUDENT ONLY -->
+<a href="issue.html" id="requestBookLink">Request Book</a>
+<a href="status.html" id="statusLink">My Status</a>
+
+<!-- LIBRARIAN ONLY -->
+<a href="request.html" id="approveLink">Requests</a>
+<a href="return.html" id="returnLink">Return Book</a>
+
+<span id="userInfo"></span>
+
+</nav>
+
+<div class="content">
+
+<h2>Welcome to Pado Aur Seekho 📚</h2>
+
+<p>Read More, Learn More.</p>
+
+<p>This system helps you manage books and students easily.</p>
+
+</div>
+
+<footer>
+© 2026 Pado Aur Seekho Library | Deployed on Netlify
+</footer>
+
+<script>
+
+/* ===== LOGIN CHECK ===== */
+
+var user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="index.html";   // login page
+}
+
+/* ===== SHOW USER PROFILE ===== */
+
+document.getElementById("userInfo").innerHTML =
+`👤 ${user.role}: ${user.name}
+ | <a href="#" onclick="logout()" style="color:white;">Logout</a>`;
+
+
+/* ===== ROLE BASED NAVBAR ===== */
+
+if(user.role === "Student"){
+
+document.getElementById("approveLink").style.display="none";
+document.getElementById("returnLink").style.display="none";
+
+}
+
+if(user.role === "Librarian"){
+
+document.getElementById("requestBookLink").style.display="none";
+document.getElementById("statusLink").style.display="none";
+
+}
+
+/* ===== LOGOUT ===== */
+
+function logout(){
+
+if(confirm("Are you sure you want to log out?")){
+
+localStorage.removeItem("user");
+
+window.location.href="index.html";
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

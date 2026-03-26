@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Status - Pado Aur Seekho</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+}
+
+/* NAVBAR */
+nav{
+background:#8bc34a;
+padding:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+nav a{
+color:white;
+margin:0 20px;
+font-weight:bold;
+text-decoration:none;
+}
+
+#userInfo{
+position:absolute;
+right:20px;
+color:white;
+font-weight:bold;
+}
+
+/* TITLE */
+.title-box{
+width:50%;
+margin:40px auto;
+text-align:center;
+background:rgba(0,0,0,0.6);
+padding:15px;
+border-radius:10px;
+color:white;
+font-size:36px;
+font-weight:bold;
+}
+
+/* CONTAINER */
+.container{
+width:90%;
+margin:20px auto;
+background:rgba(255,255,255,0.95);
+padding:20px;
+border-radius:10px;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#8bc34a;
+color:white;
+}
+
+/* STATUS COLORS */
+.pending{color:orange;font-weight:bold;}
+.approved{color:green;font-weight:bold;}
+.rejected{color:red;font-weight:bold;}
+.returned{color:blue;font-weight:bold;}
+.overdue{color:#b00020;font-weight:bold;}
+
+footer{
+text-align:center;
+padding:12px;
+color:white;
+position:fixed;
+bottom:0;
+width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="title-box">My Book Status</div>
+
+<nav>
+<a href="home.html">Home</a>
+<a href="books.html">Books</a>
+<a href="issue.html">Request Book</a>
+<a href="status.html">My Status</a>
+
+<span id="userInfo"></span>
+</nav>
+
+<div class="container">
+
+<table id="statusTable">
+
+<tr>
+<th>Book ID(s)</th>
+<th>Issue Date</th>
+<th>Deadline</th>
+<th>Status</th>
+<th>Fine</th>
+<th>Approved By</th>
+</tr>
+
+</table>
+
+</div>
+
+<footer>
+© 2026 Pado Aur Seekho Library
+</footer>
+
+<script>
+
+/* LOGIN CHECK */
+
+var user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="index.html";
+}
+
+if(user.role !== "Student"){
+alert("Students only.");
+window.location.href="home.html";
+}
+
+/* PROFILE DISPLAY */
+
+document.getElementById("userInfo").innerHTML =
+`👤 ${user.role}: ${user.name}
+ | <a href="#" onclick="logout()" style="color:white;">Logout</a>`;
+
+/* LOGOUT */
+
+function logout(){
+if(confirm("Are you sure you want to log out?")){
+localStorage.removeItem("user");
+window.location.href="index.html";
+}
+}
+
+/* LOAD STUDENT DATA */
+
+var table=document.getElementById("statusTable");
+
+var requests =
+JSON.parse(localStorage.getItem("bookRequests")) || [];
+
+/* Filter only this student */
+
+var myRequests =
+requests.filter(r => r.student === user.name);
+
+if(myRequests.length===0){
+
+table.innerHTML+=`
+<tr>
+<td colspan="6">No requests found.</td>
+</tr>
+`;
+
+}
+
+/* Today's date */
+
+var today = new Date();
+
+/* Display rows */
+
+myRequests.forEach(req => {
+
+let issueDate=req.issueDate || "-";
+let returnDate=req.returnDate || "-";
+
+let statusText=req.status;
+let statusClass="pending";
+
+let fine=0;
+
+/* Returned */
+
+if(req.returned===true){
+
+statusText="Returned";
+statusClass="returned";
+
+}
+
+/* Approved */
+
+else if(req.status==="Approved"){
+
+if(returnDate !== "-"){
+
+let deadline=new Date(returnDate);
+
+if(today > deadline){
+
+statusText="Overdue";
+statusClass="overdue";
+
+let diff=Math.ceil(
+(today-deadline)/(1000*60*60*24)
+);
+
+fine=diff*10;
+
+}else{
+
+statusText="Approved";
+statusClass="approved";
+
+}
+
+}else{
+
+statusText="Approved";
+statusClass="approved";
+
+}
+
+}
+
+/* Rejected */
+
+else if(req.status==="Rejected"){
+
+statusText="Rejected";
+statusClass="rejected";
+
+}
+
+/* Pending */
+
+else{
+
+statusText="Pending";
+statusClass="pending";
+
+}
+
+/* Add row */
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${req.books}</td>
+
+<td>${issueDate}</td>
+
+<td>${returnDate}</td>
+
+<td class="${statusClass}">
+${statusText}
+</td>
+
+<td>₹${fine}</td>
+
+<td>${req.approvedBy || "-"}</td>
+
+</tr>
+
+`;
+
+});
+
+</script>
+
+</body>
+</html>

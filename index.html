@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login - Pado Aur Seekho</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+overflow:hidden;
+}
+
+/* ===== BACKGROUND IMAGE ===== */
+body::before{
+content:"";
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+
+/* BLUR EFFECT */
+filter:blur(8px);
+transform:scale(1.1);
+
+z-index:-2;
+}
+
+/* DARK OVERLAY */
+body::after{
+content:"";
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.25);
+z-index:-1;
+}
+
+/* LOGIN BOX */
+.container{
+width:30%;
+margin:120px auto;
+background:rgba(255,255,255,0.95);
+padding:25px;
+border-radius:12px;
+text-align:center;
+box-shadow:0px 0px 20px rgba(0,0,0,0.4);
+backdrop-filter:blur(5px);
+}
+
+/* INPUTS */
+input,select{
+width:90%;
+padding:10px;
+margin:10px;
+border-radius:5px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+/* BUTTON */
+button{
+padding:10px 20px;
+background:#8bc34a;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+font-weight:bold;
+transition:0.3s;
+}
+
+button:hover{
+background:#7cb342;
+transform:scale(1.03);
+}
+
+/* HELP BOX */
+.info{
+margin-top:8px;
+padding:10px;
+background:#f1f8e9;
+border-radius:6px;
+font-size:14px;
+}
+
+h2{
+margin-bottom:15px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Library Login</h2>
+
+<select id="role" onchange="updateHelp()">
+<option value="Student">Student</option>
+<option value="Librarian">Librarian</option>
+</select>
+
+<input type="text" id="username"
+placeholder="Enter Student ID / Username">
+
+<input type="password" id="password"
+placeholder="Enter Password">
+
+<div class="info" id="loginHelp"></div>
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<script>
+
+/* ===== AUTO REDIRECT IF ALREADY LOGGED IN ===== */
+
+var existingUser = JSON.parse(localStorage.getItem("user"));
+
+if(existingUser){
+window.location.href="home.html";
+}
+
+/* ===== LOGIN HELP TEXT ===== */
+
+function updateHelp(){
+
+var role=document.getElementById("role").value;
+var help=document.getElementById("loginHelp");
+
+if(role==="Student"){
+help.innerHTML=`
+<b>Student Login:</b><br>
+ID Format: Y23CD114<br>
+Password: <b>student123</b>
+`;
+}else{
+help.innerHTML=`
+<b>Librarian Login:</b><br>
+Username: <b>librarian</b><br>
+Password: <b>lib123</b>
+`;
+}
+
+}
+
+updateHelp();
+
+/* ===== LOGIN FUNCTION ===== */
+
+function login(){
+
+var role=document.getElementById("role").value;
+var username=document.getElementById("username").value.trim();
+var password=document.getElementById("password").value;
+
+/* STUDENT LOGIN */
+
+if(role==="Student"){
+
+var pattern=/^Y\d{2}[A-Z]{2}\d{3}$/i;
+
+if(!pattern.test(username)){
+alert("Invalid Student ID format.\nExample: Y23CD114");
+return;
+}
+
+if(password!=="student123"){
+alert("Wrong student password");
+return;
+}
+
+localStorage.setItem("user",JSON.stringify({
+role:"Student",
+name:username.toUpperCase()
+}));
+
+}
+
+/* LIBRARIAN LOGIN */
+
+else{
+
+if(username!=="librarian" || password!=="lib123"){
+alert("Invalid librarian credentials");
+return;
+}
+
+localStorage.setItem("user",JSON.stringify({
+role:"Librarian",
+name:"Librarian"
+}));
+
+}
+
+/* REDIRECT TO HOME PAGE */
+
+window.location.href="home.html";
+
+}
+
+</script>
+
+</body>
+</html>

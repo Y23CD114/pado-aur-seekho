@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Return Books - Pado Aur Seekho</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+}
+
+/* NAVBAR */
+nav{
+background:#8bc34a;
+padding:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+nav a{
+color:white;
+margin:0 20px;
+font-weight:bold;
+text-decoration:none;
+}
+
+#userInfo{
+position:absolute;
+right:20px;
+color:white;
+font-weight:bold;
+}
+
+/* TITLE */
+.title-box{
+width:50%;
+margin:40px auto;
+text-align:center;
+background:rgba(0,0,0,0.6);
+padding:15px;
+border-radius:10px;
+color:white;
+font-size:36px;
+font-weight:bold;
+}
+
+/* CONTAINER */
+.container{
+width:90%;
+margin:20px auto;
+background:rgba(255,255,255,0.95);
+padding:20px;
+border-radius:10px;
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#8bc34a;
+color:white;
+}
+
+button{
+padding:6px 12px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+.returnBtn{
+background:#4caf50;
+color:white;
+}
+
+.completed{
+background:gray;
+color:white;
+cursor:not-allowed;
+}
+
+footer{
+text-align:center;
+padding:12px;
+color:white;
+position:fixed;
+bottom:0;
+width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="title-box">Return Books (Librarian)</div>
+
+<nav>
+
+<a href="home.html">Home</a>
+<a href="books.html">Books</a>
+<a href="return.html">Return Books</a>
+<a href="request.html">Requests</a>
+
+<span id="userInfo"></span>
+
+</nav>
+
+<div class="container">
+
+<table id="returnTable">
+
+<tr>
+<th>Student ID</th>
+<th>Book ID</th>
+<th>Issue Date</th>
+<th>Return Date</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+</table>
+
+</div>
+
+<footer>
+© 2026 Pado Aur Seekho Library
+</footer>
+
+<script>
+
+/* ===== LOGIN CHECK ===== */
+
+var user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="index.html";
+}
+
+if(user.role !== "Librarian"){
+alert("Access denied. Librarian only.");
+window.location.href="home.html";
+}
+
+/* PROFILE */
+
+document.getElementById("userInfo").innerHTML =
+`👤 ${user.role}: ${user.name}
+ | <a href="#" onclick="logout()" style="color:white;">Logout</a>`;
+
+/* LOGOUT */
+
+function logout(){
+
+if(confirm("Are you sure you want to log out?")){
+
+localStorage.removeItem("user");
+
+window.location.href="index.html";
+
+}
+
+}
+
+/* ===== LOAD REQUEST DATA ===== */
+
+var table=document.getElementById("returnTable");
+
+var requests =
+JSON.parse(localStorage.getItem("bookRequests")) || [];
+
+var found=false;
+
+requests.forEach((req,index)=>{
+
+if(req.status==="Approved"){
+
+found=true;
+
+let statusText = req.returned ? "Returned" : "Approved";
+
+let button="";
+
+if(req.returned){
+
+button=`<button class="completed">Completed</button>`;
+
+}else{
+
+button=`<button class="returnBtn"
+onclick="markReturned(${index})">
+Mark Returned
+</button>`;
+
+}
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${req.student}</td>
+
+<td>${req.books}</td>
+
+<td>${req.issueDate}</td>
+
+<td>${req.returnDate}</td>
+
+<td>${statusText}</td>
+
+<td>${button}</td>
+
+</tr>
+
+`;
+
+}
+
+});
+
+/* If no approved books */
+
+if(!found){
+
+table.innerHTML+=`
+<tr>
+<td colspan="6">No approved books to return.</td>
+</tr>
+`;
+
+}
+
+/* ===== MARK RETURNED ===== */
+
+function markReturned(i){
+
+var books =
+JSON.parse(localStorage.getItem("libraryBooks")) || [];
+
+/* Get book IDs */
+
+var bookIDs =
+requests[i].books.split(",");
+
+/* Increase copies */
+
+bookIDs.forEach(id => {
+
+let book =
+books.find(b => b.id === id.trim());
+
+if(book){
+book.copies += 1;
+}
+
+});
+
+/* Save updated books */
+
+localStorage.setItem(
+"libraryBooks",
+JSON.stringify(books)
+);
+
+/* Update request */
+
+requests[i].returned=true;
+
+localStorage.setItem(
+"bookRequests",
+JSON.stringify(requests)
+);
+
+alert("Book returned successfully!");
+
+location.reload();
+
+}
+
+</script>
+
+</body>
+</html>

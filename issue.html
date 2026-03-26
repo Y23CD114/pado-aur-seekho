@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Request Book - Pado Aur Seekho</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background-image:url("bg.jpg");
+background-size:cover;
+background-position:center;
+}
+
+/* NAVBAR */
+
+nav{
+background:#8bc34a;
+padding:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+nav a{
+color:white;
+margin:0 20px;
+font-weight:bold;
+text-decoration:none;
+}
+
+#userInfo{
+position:absolute;
+right:20px;
+color:white;
+font-weight:bold;
+}
+
+/* TITLE */
+
+.title-box{
+width:50%;
+margin:40px auto 10px auto;
+text-align:center;
+background:rgba(0,0,0,0.6);
+padding:15px;
+border-radius:10px;
+color:white;
+font-size:40px;
+font-weight:bold;
+}
+
+.container{
+width:40%;
+margin:40px auto;
+background:rgba(255,255,255,0.95);
+padding:25px;
+border-radius:10px;
+}
+
+label{
+font-weight:bold;
+}
+
+input{
+width:100%;
+padding:8px;
+margin:8px 0 15px 0;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#8bc34a;
+color:white;
+border:none;
+font-size:16px;
+border-radius:5px;
+cursor:pointer;
+}
+
+.return-box{
+background:#f1f8e9;
+padding:10px;
+border-radius:5px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.response-box{
+display:none;
+margin-top:20px;
+padding:15px;
+background:#e8f5e9;
+border-radius:10px;
+font-weight:bold;
+text-align:center;
+}
+
+footer{
+text-align:center;
+padding:12px;
+color:white;
+position:fixed;
+bottom:0;
+width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="title-box">Request Book</div>
+
+<nav>
+
+<a href="home.html">Home</a>
+<a href="books.html">Books</a>
+<a href="issue.html">Request Book</a>
+<a href="status.html">My Status</a>
+
+<span id="userInfo"></span>
+
+</nav>
+
+<div class="container">
+
+<h2>Book Request Form</h2>
+
+<form onsubmit="sendRequest(event)">
+
+<label>Student ID:</label>
+<input type="text" id="studentID" readonly>
+
+<label>Book ID(s):</label>
+<input type="text" id="bookIDs" readonly>
+
+<label>Issue Date:</label>
+<input type="date"
+id="issueDate"
+onchange="calculateReturnDate()"
+required>
+
+<div class="return-box" id="returnBox">
+Return Date will appear here
+</div>
+
+<button type="submit">Send Request</button>
+
+</form>
+
+<div class="response-box" id="responseBox"></div>
+
+</div>
+
+<footer>
+© 2026 Pado Aur Seekho Library
+</footer>
+
+<script>
+
+/* ===== LOGIN CHECK ===== */
+
+var user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+window.location.href="index.html";
+}
+
+/* STUDENTS ONLY */
+
+if(user.role !== "Student"){
+alert("Only students can request books.");
+window.location.href="home.html";
+}
+
+/* PROFILE DISPLAY */
+
+document.getElementById("userInfo").innerHTML =
+`👤 ${user.role}: ${user.name}
+ | <a href="#" onclick="logout()" style="color:white;">Logout</a>`;
+
+/* LOGOUT */
+
+function logout(){
+
+if(confirm("Are you sure you want to log out?")){
+
+localStorage.removeItem("user");
+
+window.location.href="index.html";
+
+}
+
+}
+
+/* AUTO STUDENT ID */
+
+document.getElementById("studentID").value = user.name;
+
+/* ===== GET BOOK IDS FROM URL ===== */
+
+var params = new URLSearchParams(window.location.search);
+
+var books = params.get("books");
+
+if(!books){
+
+alert("Please select books from the Books page.");
+
+window.location.href="books.html";
+
+}
+
+document.getElementById("bookIDs").value = books;
+
+/* ===== DATE LIMIT ===== */
+
+var todayObj = new Date();
+var today = todayObj.toISOString().split('T')[0];
+
+var maxDateObj = new Date();
+maxDateObj.setDate(maxDateObj.getDate()+7);
+var maxDate = maxDateObj.toISOString().split('T')[0];
+
+var issueInput = document.getElementById("issueDate");
+
+issueInput.min = today;
+issueInput.max = maxDate;
+issueInput.value = today;
+
+/* ===== RETURN DATE CALCULATION ===== */
+
+function calculateReturnDate(){
+
+var issueDate = issueInput.value;
+
+if(issueDate==="") return;
+
+var date = new Date(issueDate);
+
+date.setDate(date.getDate()+7);
+
+var returnDate = date.toISOString().split('T')[0];
+
+document.getElementById("returnBox").innerHTML =
+"Return Date: " + returnDate;
+
+}
+
+calculateReturnDate();
+
+/* ===== SEND REQUEST ===== */
+
+function sendRequest(event){
+
+event.preventDefault();
+
+var returnDateText =
+document.getElementById("returnBox").innerText
+.replace("Return Date: ","");
+
+var requests =
+JSON.parse(localStorage.getItem("bookRequests")) || [];
+
+requests.push({
+
+student:user.name,
+books:document.getElementById("bookIDs").value,
+issueDate:issueInput.value,
+returnDate:returnDateText,
+status:"Pending",
+approvedBy:null,
+returned:false
+
+});
+
+localStorage.setItem(
+"bookRequests",
+JSON.stringify(requests)
+);
+
+var response =
+document.getElementById("responseBox");
+
+response.style.display="block";
+
+response.innerHTML=`
+✅ Request Sent Successfully!<br><br>
+📚 Books Requested: ${books}<br>
+📩 Waiting for Librarian Approval
+`;
+
+}
+
+</script>
+
+</body>
+</html>
